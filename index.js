@@ -1,17 +1,18 @@
 const fs = require('node:fs');
 const path = require('node:path');
 require('dotenv').config();
-const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permissions, Collection, Events } = require(`discord.js`);
-const ytdl = require(`ytdl-core`);
+const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permissions, Collection, Events, ActivityType } = require(`discord.js`);
+// const ytdl = require(`ytdl-core`);
 
 const prefix = '!';
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildVoiceStates] });
 
 client.on("ready", () => {
     console.log("Bloody Marry is online!");
 
-    client.user.setActivity("!help", { type: "PLAYING" });
+    // client.user.setActivity("/help", { type: "PLAYING" });
+    client.user.setPresence({ activities: [{ name: `/help`, type: ActivityType.Playing }] });
 });
 
 client.commands = new Collection();
