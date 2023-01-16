@@ -6,19 +6,31 @@ const playdl = require('play-dl');
 module.exports = {
     data: new SlashCommandBuilder().setName('play').setDescription('Play a song from a youtube URL').addStringOption(option => option.setName('url').setDescription('URL of the youtube video you want to be played').setRequired(true)),
     async execute(interaction) {
-        const connection = joinVoiceChannel({
-            channelId: interaction.member.voice.channelId,
-            guildId: interaction.guild.id,
-            adapterCreator: interaction.guild.voiceAdapterCreator,
-        });
-        // await interaction.reply('Playing: ');
-        // console.log(interaction.member.voice.channelId);
-        // console.log(interaction.guild.id);
-        // console.log(interaction.guild.voiceAdapterCreator);
+        if (interaction.member.voice.channelId == null) {
+            await interaction.reply('You need to join a voice channel first! Bozo');
+            return;
+        }
+        // let connection = await getVoiceConnection(interaction.guild.id);
+        // if (connection == null) {
+        
+        // const connection = null;
+        let connection = getVoiceConnection(interaction.guild.id);
+        // let play = get
+        if (connection == null) {
+            console.log("triggered");
+            // var requestArray = [];
+            connection = joinVoiceChannel({
+                channelId: interaction.member.voice.channelId,
+                guildId: interaction.guild.id,
+                adapterCreator: interaction.guild.voiceAdapterCreator,
+            });
+        } else {
+            // requestArray.push(interaction.options.getString('url'));
+            await interaction.reply({ content: 'Please wait until the current sound playback is finished. Queue functionality will be added in the future.', ephemeral: true });
+            return;
+        }
 
         const player = createAudioPlayer();
-        // const stream = ytdl("https://www.youtube.com/watch?v=aeGTMZCzWTg&ab_channel=RapCity", { filter: 'audioonly' });
-        // const stream = await playdl.stream("https://www.youtube.com/watch?v=aeGTMZCzWTg&ab_channel=RapCity");
         console.log(interaction.options.getString('url'));
         const stream = await playdl.stream(interaction.options.getString('url'));
         
@@ -49,6 +61,7 @@ module.exports = {
         player.play(resource);
 
         player.on(AudioPlayerStatus.Idle, () => {
+            // console.log(requestArray);
             player.stop();
             connection.destroy();
         });
