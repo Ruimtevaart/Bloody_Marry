@@ -3,12 +3,16 @@ const path = require('node:path');
 require('dotenv').config();
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permissions, Collection, Events, ActivityType } = require(`discord.js`);
 // const ytdl = require(`ytdl-core`);
+const dir = './songRequests/'
 
 const prefix = '!';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildVoiceStates] });
 
 client.on("ready", () => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir);
+    }
     console.log("Bloody Marry is online!");
 
     // client.user.setActivity("/help", { type: "PLAYING" });

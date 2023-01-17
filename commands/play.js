@@ -2,6 +2,8 @@ const { SlashCommandBuilder } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, entersState, VoiceConnectionStatus, getVoiceConnection, AudioPlayerStatus } = require('@discordjs/voice');
 // const ytdl = require('ytdl-core');
 const playdl = require('play-dl');
+const fs = require('fs');
+const dir = './songRequests/'
 
 module.exports = {
     data: new SlashCommandBuilder().setName('play').setDescription('Play a song from a youtube URL').addStringOption(option => option.setName('url').setDescription('URL of the youtube video you want to be played').setRequired(true)),
@@ -15,18 +17,24 @@ module.exports = {
         
         // const connection = null;
         let connection = getVoiceConnection(interaction.guild.id);
+        const fileName = dir + interaction.guild.id + '-' + interaction.member.voice.channelId + '.json';
         // let play = get
-        if (connection == null) {
+        if (connection == null && !fs.existsSync(fileName)) {
             console.log("triggered");
             // var requestArray = [];
-            connection = joinVoiceChannel({
-                channelId: interaction.member.voice.channelId,
-                guildId: interaction.guild.id,
-                adapterCreator: interaction.guild.voiceAdapterCreator,
-            });
+            // connection = joinVoiceChannel({
+            //     channelId: interaction.member.voice.channelId,
+            //     guildId: interaction.guild.id,
+            //     adapterCreator: interaction.guild.voiceAdapterCreator,
+            // });
+            var requestFile = fs.openSync(fileName, 'w');
+            console.log(requestFile);
+            await interaction.reply({ content: fileName, ephemeral: true });
+            return;
         } else {
             // requestArray.push(interaction.options.getString('url'));
-            await interaction.reply({ content: 'Please wait until the current sound playback is finished. Queue functionality will be added in the future.', ephemeral: true });
+            let requestArray = JSON.parse(fs.readFileSync(fileName));
+            await interaction.reply({ content: JSON.stringify(requestArray), ephemeral: true });
             return;
         }
 
@@ -65,17 +73,6 @@ module.exports = {
             player.stop();
             connection.destroy();
         });
-        // try {
-        //     await entersState(player, AudioPlayerStatus.Playing, 10000);
-        //     console.log("Playing!");
-        // } catch (error) {
-        //     console.log("Not playing:", error);
-        //     connection.destroy();
-        // }
-
-
-        // const subscription = connection.subscribe(player);
-        // player.play(resource);
 
         player.on('error', error => {
             console.error(error);
@@ -83,60 +80,6 @@ module.exports = {
             // console.error(`Error: ${error.message} with resource`);
         })
 
-        // if (subscription) {
-        //     setTimeout(() => subscription.unsubscribe(), 30_000);
-        // }
-
-        // await sleep(10000);
-        
-        // connection.destroy();
-
-
-        // connection.on(VoiceConnectionStatus.Ready, () => {
-        //     const subscription = connection.subscribe(player);
-        //     player.play(resource);
-        // });
-
-
-
-
-
-
-
-
-
-        
-        // console.log(player);
-        
-        // console.log(subscription);
-        // console.log(connection.state);
-        // console.log(resource);
-        
-
-        // console.log(interaction.guildId);
-        // console.log(connection2);
-
-        // try {
-        //     await entersState(connection, VoiceConnectionStatus.Ready, 5000);
-        //     console.log("Connected: " + interaction.member.voice.channel.name);
-        // } catch (error) {
-        //     console.log("Voice connection not ready within 5s.", error);
-        //     return null;
-        // }
-        // connection.subscribe(player);
-        // player.play(resource);
-        // player.on('error', error => {
-        //     console.error(`Error: ${error.message} with resource`);
-        // });
-
-
-        
-
-
-        // await sleep(2000);
-        // connection.destroy();
-
-        // await interaction.reply('interaction');
     },
 };
 
