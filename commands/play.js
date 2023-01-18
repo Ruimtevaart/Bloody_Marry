@@ -12,104 +12,71 @@ module.exports = {
             await interaction.reply('You need to join a voice channel first! Bozo');
             return;
         }
-        // let connection = await getVoiceConnection(interaction.guild.id);
-        // if (connection == null) {
-        
-        // const connection = null;
-        var requestArray = null;
-        // var resource = null;
-        // var subscription = null;
-        // var player = null;
-        let connection = getVoiceConnection(interaction.guild.id);
+        var connection = getVoiceConnection(interaction.guild.id);
         const fileName = dir + interaction.guild.id + '.json';
-        // let play = get
-        // if (connection == null && !fs.existsSync(fileName)) {
-        if (connection == null) {
-            // console.log("triggered");
-            // var requestArray = [];
+
+        if (connection != null) {
+            let requestArray = JSON.parse(fs.readFileSync(fileName));
+            requestArray.push(interaction.options.getString('url'));
+            overWriteFile(fileName, requestArray);
+            await interaction.reply('Added to queue: ' + interaction.options.getString('url'));
+            return;
+        } else {
             connection = joinVoiceChannel({
                 channelId: interaction.member.voice.channelId,
                 guildId: interaction.guild.id,
                 adapterCreator: interaction.guild.voiceAdapterCreator,
             });
-            var requestFile = fs.openSync(fileName, 'w');
-            fs.writeFile(fileName, JSON.stringify([]), (error) => {if (error) console.log(error);});
-            // console.log(requestFile);
+            connection.on('stateChange', (oldState, newState) => {
+                console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
+            });
+            var player = createAudioPlayer();
+            var subscription = connection.subscribe(player);
+            player.on('stateChange', (oldState, newState) => {
+                console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
+            });
+            player.on('error', error => {
+                console.error(`Error: ${error.message} with resource`);
+            });
             try {
                 await entersState(connection, VoiceConnectionStatus.Ready, 5000);
                 console.log("Connected: " + interaction.member.voice.channel.name);
                 await interaction.reply('Playing: ' + interaction.options.getString('url'));
-                // await sleep(5000);
             } catch (error) {
                 console.log("Voice Connection not ready within 5s.", error);
-                return null;    
+                return;    
             }
-            const player = createAudioPlayer();
-            console.log(interaction.options.getString('url'));
             const stream = await playdl.stream(interaction.options.getString('url'));
             const resource = createAudioResource(stream.stream, { inputType: stream.type });
             player.play(resource);
-            // await interaction.reply({ content: fileName, ephemeral: true });
-            // return;
-        } else {
-            // requestArray.push(interaction.options.getString('url'));
-            requestArray = JSON.parse(fs.readFileSync(fileName));
-            // await interaction.reply({ content: JSON.stringify(requestArray), ephemeral: true });
-            // return;
+            
+            let fileDescriptor = fs.openSync(fileName, 'w');
+            overWriteFile(fileName, []);
+            
+            player.on(AudioPlayerStatus.Idle, async () => {
+                let requestArray = JSON.parse(fs.readFileSync(fileName));
+                if (requestArray.length === 0) {
+                    fs.rm(fileName, { force: true }, (error) => {if (error) console.log("unlink error: " + error);});
+                    fs.close(fileDescriptor, (error) => {if (error) console.log("close error: " + error);})
+                    player.stop();
+                    connection.destroy();
+                } else {
+                    const nextSong = requestArray.shift();
+                    const stream = await playdl.stream(nextSong);
+                    const resource = createAudioResource(stream.stream, { inputType: stream.type });
+                    player.play(resource);
+                    overWriteFile(fileName, requestArray);
+                }
+            });
         }
-
-        // const player = createAudioPlayer();
-        // console.log(interaction.options.getString('url'));
-        // const stream = await playdl.stream(interaction.options.getString('url'));
         
-        connection.on('stateChange', (oldState, newState) => {
-            console.log(`Connection transitioned from ${oldState.status} to ${newState.status}`);
-        });
-        player.on('stateChange', (oldState, newState) => {
-            console.log(`Audio player transitioned from ${oldState.status} to ${newState.status}`);
-        });
-
-        // console.log(stream);
-        // const resource = createAudioResource(stream.stream, { inputType: stream.type });
-        // const subscription = connection.subscribe(player);
-
-
-        // try {
-        //     await entersState(connection, VoiceConnectionStatus.Ready, 5000);
-        //     console.log("Connected: " + interaction.member.voice.channel.name);
-        //     await interaction.reply('Playing: ' + interaction.options.getString('url'));
-        //     // await sleep(5000);
-        // } catch (error) {
-        //     console.log("Voice Connection not ready within 5s.", error);
-        //     return null;    
-        // }
-
-        
-        
-        // player.play(resource);
-
-        player.on(AudioPlayerStatus.Idle, () => {
-            // console.log(requestArray);
-            requestArray = JSON.parse(fs.readFileSync(fileName));
-            if (requestArray == []) {
-                player.stop();
-                connection.destroy();
-            } else {
-                const stream = playdl.stream(interaction.options.getString('url'));
-                const resource = createAudioResource(stream.stream, { inputType: stream.type });
-                player.play(resource);
-                fs.writeFile(fileName, JSON.stringify({}), (error) => {if (error) console.log(error);});
-            }
-        });
-
-        player.on('error', error => {
-            console.error(error);
-            // console.error(`Error: ${error} with resource`);
-            // console.error(`Error: ${error.message} with resource`);
-        })
-
     },
 };
+
+
+function overWriteFile (fileName, content) {
+    fs.writeFileSync(fileName, JSON.stringify(content), (error) => {if (error) console.log("overWriteFile error: " + error);});
+}
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
