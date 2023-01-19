@@ -16,6 +16,7 @@ module.exports = {
             await interaction.reply('The bot is not currently playing anything');
             return;
         }
-        
+        connection.state.subscription.player.stop();
+        await interaction.reply('Skipped!');
     },
 };
