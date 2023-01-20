@@ -5,8 +5,11 @@ const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permission
 // const ytdl = require(`ytdl-core`);
 const dir = './songRequests/'
 const query = require('./query');
-
-const prefix = '!';
+const { Configuration, OpenAIApi } = require('openai');
+const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+const openai = new OpenAIApi(configuration);
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildVoiceStates] });
 
@@ -38,7 +41,7 @@ for (const file of commandFiles) {
 
 client.on(Events.MessageCreate, async message => {
     if (message.author.bot) return;
-    query.execute(message);
+    query.execute(message, openai);
 });
 
 client.on(Events.InteractionCreate, async interaction => {
