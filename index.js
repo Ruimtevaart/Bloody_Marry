@@ -4,6 +4,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permissions, Collection, Events, ActivityType } = require(`discord.js`);
 // const ytdl = require(`ytdl-core`);
 const dir = './songRequests/'
+const query = require('./query');
 
 const prefix = '!';
 
@@ -35,7 +36,14 @@ for (const file of commandFiles) {
     }
 }
 
+client.on(Events.MessageCreate, async message => {
+    if (message.author.bot) return;
+    query.execute(message);
+});
+
 client.on(Events.InteractionCreate, async interaction => {
+    // if (interaction.message)
+    // console.log(interaction);
     if (!interaction.isChatInputCommand()) return;
 
     const command = interaction.client.commands.get(interaction.commandName);
