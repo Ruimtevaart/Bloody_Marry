@@ -4,7 +4,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permissions, Collection, Events, ActivityType } = require(`discord.js`);
 // const ytdl = require(`ytdl-core`);
 const dir = './songRequests/'
-const query = require('./query');
+// const query = require('./query');
 const { Configuration, OpenAIApi } = require('openai');
 const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
@@ -39,10 +39,11 @@ for (const file of commandFiles) {
     }
 }
 
-client.on(Events.MessageCreate, async message => {
-    if (message.author.bot) return;
-    query.execute(message, openai);
-});
+// Commented since openai free trial expired 
+// client.on(Events.MessageCreate, async message => {
+//     if (message.author.bot) return;
+//     query.execute(message, openai);
+// });
 
 client.on(Events.InteractionCreate, async interaction => {
     // if (interaction.message)
@@ -64,40 +65,6 @@ client.on(Events.InteractionCreate, async interaction => {
     }
     // console.log(interaction);
 });
-
-// client.on("messageCreate", (message) => {
-//     if(!message.content.startsWith(prefix) || message.author.bot) return;
-
-//     const args = message.content.slice(prefix.length).split(/ +/);
-//     const command = args.shift().toLowerCase();
-
-//     //Message array
-//     const messageArray = message.content.split(" ");
-//     const argument = messageArray.slice(1);
-//     const cmd = messageArray[0];
-
-//     //Commands
-//     if (command === 'ping') {
-//         message.channel.send("Pong");
-//     }
-
-//     if (command === 'play') {
-//         message.channel.send(message.author.username);
-//     }
-
-// });
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
