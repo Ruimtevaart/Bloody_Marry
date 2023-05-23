@@ -6,20 +6,28 @@ const fs = require('fs');
 const dir = './songRequests/'
 
 module.exports = {
-    data: new SlashCommandBuilder().setName('play').setDescription('Play a song from a youtube URL').addStringOption(option => option.setName('url').setDescription('URL of the youtube video you want to be played').setRequired(true)),
+    data: new SlashCommandBuilder().setName('play').setDescription('Play a song from youtube').addStringOption(option => option.setName('query').setDescription('Youtube search query or URL of a video').setRequired(true)),
     async execute(interaction) {
         if (interaction.member.voice.channelId == null) {
             await interaction.reply('You need to join a voice channel first! Bozo');
             return;
         }
+
+        const searchResult = await playdl.search(interaction.options.getString('url'), { limit: 1, source: { youtube: "video" } });
+        if (searchResult.length === 0) {
+            await interaction.reply(`No youtube search results found for query '${interaction.options.getString('url')}'`);
+            return;
+        }
+        const video = searchResult[0];
+        
         var connection = getVoiceConnection(interaction.guild.id);
         const fileName = dir + interaction.guild.id + '.json';
 
         if (connection != null) {
             let requestArray = JSON.parse(fs.readFileSync(fileName));
-            requestArray.push(interaction.options.getString('url'));
+            requestArray.push(video.url);
             overWriteFile(fileName, requestArray);
-            await interaction.reply('Added to queue: ' + interaction.options.getString('url'));
+            await interaction.reply('Added to queue: ' + video.url);
             return;
         } else {
             connection = joinVoiceChannel({
@@ -41,12 +49,12 @@ module.exports = {
             try {
                 await entersState(connection, VoiceConnectionStatus.Ready, 5000);
                 console.log("Connected: " + interaction.member.voice.channel.name);
-                await interaction.reply('Playing: ' + interaction.options.getString('url'));
+                await interaction.reply('Playing: ' + video.url);
             } catch (error) {
                 console.log("Voice Connection not ready within 5s.", error);
                 return;    
             }
-            const stream = await playdl.stream(interaction.options.getString('url'));
+            const stream = await playdl.stream(video.url);
             const resource = createAudioResource(stream.stream, { inputType: stream.type });
             player.play(resource);
             
@@ -76,8 +84,4 @@ module.exports = {
 
 function overWriteFile (fileName, content) {
     fs.writeFileSync(fileName, JSON.stringify(content), (error) => {if (error) console.log("overWriteFile error: " + error);});
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
 }
