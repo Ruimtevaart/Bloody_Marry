@@ -13,9 +13,9 @@ module.exports = {
             return;
         }
 
-        const searchResult = await playdl.search(interaction.options.getString('url'), { limit: 1, source: { youtube: "video" } });
+        const searchResult = await playdl.search(interaction.options.getString('query'), { limit: 1, source: { youtube: "video" } });
         if (searchResult.length === 0) {
-            await interaction.reply(`No youtube search results found for query '${interaction.options.getString('url')}'`);
+            await interaction.reply(`No youtube search results found for query '${interaction.options.getString('query')}'`);
             return;
         }
         const video = searchResult[0];
