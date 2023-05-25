@@ -27,7 +27,7 @@ module.exports = {
             let requestArray = JSON.parse(fs.readFileSync(fileName));
             requestArray.push(video.url);
             overWriteFile(fileName, requestArray);
-            await interaction.reply('Added to queue: ' + video.url);
+            await interaction.reply(`Added to queue: ${video.title} by ${video.channel}, duration: ${video.durationRaw}`);
             return;
         } else {
             connection = joinVoiceChannel({
@@ -49,7 +49,7 @@ module.exports = {
             try {
                 await entersState(connection, VoiceConnectionStatus.Ready, 5000);
                 console.log("Connected: " + interaction.member.voice.channel.name);
-                await interaction.reply('Playing: ' + video.url);
+                await interaction.reply(`Playing: ${video.title} by ${video.channel}, duration: ${video.durationRaw}`);
             } catch (error) {
                 console.log("Voice Connection not ready within 5s.", error);
                 return;    
