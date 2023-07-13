@@ -13,12 +13,16 @@ module.exports = {
             return;
         }
 
-        const searchResult = await playdl.search(interaction.options.getString('query'), { limit: 1, source: { youtube: "video" } });
-        if (searchResult.length === 0) {
-            await interaction.reply(`No youtube search results found for query '${interaction.options.getString('query')}'`);
-            return;
+        try {
+            video = (await playdl.video_basic_info(interaction.options.getString('query'))).video_details;
+        } catch {
+            const searchResult = await playdl.search(interaction.options.getString('query'), { limit: 1, source: { youtube: "video" } });
+            if (searchResult.length === 0) {
+                await interaction.reply(`No youtube search results found for query '${interaction.options.getString('query')}'`);
+                return;
+            }
+            video = searchResult[0];
         }
-        const video = searchResult[0];
         
         var connection = getVoiceConnection(interaction.guild.id);
         const fileName = dir + interaction.guild.id + '.json';
